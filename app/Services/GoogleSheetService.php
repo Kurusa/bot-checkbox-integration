@@ -16,7 +16,11 @@ class GoogleSheetService
         return $this->sheetsService->spreadsheets_values->get($spreadsheetId, $range);
     }
 
-    public function writeSpreadsheetValue(string $spreadsheetId, ValueRange $body, string $range): void
+    public function writeSpreadsheetValue(
+        string     $spreadsheetId,
+        ValueRange $body,
+        string     $range,
+    ): void
     {
         $this->sheetsService->spreadsheets_values->append(
             $spreadsheetId,
