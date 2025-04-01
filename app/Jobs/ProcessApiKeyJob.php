@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use Carbon\Carbon;
+use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -39,7 +40,7 @@ class ProcessApiKeyJob extends Job
             $totalTurnover = $this->parseTotalTurnover($response->getBody()->getContents());
 
             dispatch(new UpdateGoogleSheetJob($totalTurnover, $this->apiKeyIndex));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
         }
     }
 

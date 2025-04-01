@@ -11,13 +11,14 @@ class FetchApiKeysJob extends Job
 {
     use InteractsWithQueue, Queueable, SerializesModels;
 
+    private const API_KEYS_RANGE = 'API_checkbox!C2:C30';
+
     public function handle(GoogleSheetService $googleSheetService): void
     {
-        $spreadsheetId = env('BASE_SPREADSHEET_ID');
-
-        $range = 'API_checkbox!C2:C30';
-
-        $data = $googleSheetService->getSpreadsheetValues($spreadsheetId, $range);
+        $data = $googleSheetService->getSpreadsheetValues(
+            env('BASE_SPREADSHEET_ID'),
+            self::API_KEYS_RANGE
+        );
 
         foreach ($data->getValues() as $index => $apiKey) {
             dispatch(new ProcessApiKeyJob($apiKey[0], $index + 1));
