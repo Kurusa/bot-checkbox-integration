@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\FetchApiKeysJob;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Bus;
 
 class UpdateFinancialDataCommand extends Command
 {
@@ -13,7 +14,7 @@ class UpdateFinancialDataCommand extends Command
 
     public function handle(): int
     {
-        dispatch(new FetchApiKeysJob());
+        Bus::dispatchNow(new FetchApiKeysJob());
 
         return Command::SUCCESS;
     }
