@@ -28,7 +28,6 @@ class GoogleSheetService
             $body,
             [
                 'valueInputOption' => 'USER_ENTERED',
-                'insertDataOption' => 'INSERT_ROWS',
             ]
         );
     }

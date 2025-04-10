@@ -2,7 +2,7 @@
 
 namespace App\Services\Balance;
 
-use Carbon\Carbon;
+use SimpleXMLElement;
 
 class NovaPayBalanceService implements BalancerServiceInterface
 {
@@ -11,110 +11,74 @@ class NovaPayBalanceService implements BalancerServiceInterface
 
     public function getTotalTurnover(string $apiKey): int
     {
-        [$login, $password] = explode(':', $apiKey);
+//        [$login, $password] = explode(':', $apiKey);
 
-        $preAuth = $this->sendSoapRequest('PreUserAuthentication', [
+//        $preAuth = $this->sendSoapRequest('PreUserAuthentication', [
+//            'request' => [
+//                'login' => $login,
+//                'password' => $password,
+//            ],
+//        ]);
+//        $preAuthResponse = $preAuth->children('http://tempuri.org/')->PreUserAuthenticationResponse;
+//        $preResult = $preAuthResponse->PreUserAuthenticationResult;
+//
+//        $tempPrincipal = (string)$preResult->temp_principal;
+//        $codeOperationOtp = (string)$preResult->code_operation_otp;
+//
+//        dd([
+//            $tempPrincipal,
+//            $codeOperationOtp,
+//        ]);
+
+        $this->sendSoapRequest('RefreshUserAuthentication', [
             'request' => [
-                'login' => $login,
-                'password' => $password,
+                'principal' => $apiKey,
             ],
         ]);
 
-        $preResult = $preAuth['PreUserAuthenticationResponse']['PreUserAuthenticationResult'] ?? null;
-dd($preAuth);
-        if (!$preResult) {
-            return 0;
-        }
-
-        $auth = $this->sendSoapRequest('UserAuthentication', [
+        $response = $this->sendSoapRequest('GetClientsList', [
             'request' => [
-                'request_ref' => '',
-                'temp_principal' => $preResult['temp_principal'],
-                'code_operation_otp' => $preResult['code_operation_otp'],
-                'otp_password' => $otp,
+                'principal' => $apiKey,
             ],
         ]);
+        $preResponse = $response->children('http://tempuri.org/')->GetClientsListResponse;
+        $preResult = $preResponse->GetClientsListResult;
+        $firstClientId = (string)$preResult->clients->Clients->id;
 
-        $authResult = $auth['UserAuthenticationResponse']['UserAuthenticationResult'] ?? null;
-
-        if (!$authResult) {
-            return 0;
-        }
-
-        $principal = $authResult['principal'] ?? null;
-
-        if (!$principal) {
-            return 0;
-        }
-
-        $clients = $this->sendSoapRequest('GetClientsList', [
+        $response = $this->sendSoapRequest('GetAccountsList', [
             'request' => [
-                'request_ref' => '',
-                'principal' => $principal,
+                'principal' => $apiKey,
+                'client_id' => $firstClientId,
             ],
         ]);
+        $preResponse = $response->children('http://tempuri.org/')->GetAccountsListResponse;
+        $preResult = $preResponse->GetAccountsListResult;
+        $firstAccountId = (string)$preResult->accounts->Accounts->id;
 
-        $clientId = $clients['GetClientsListResponse']['GetClientsListResult']['clients']['Client']['id'] ?? null;
-
-        if (!$clientId) {
-            return 0;
-        }
-
-        $accounts = $this->sendSoapRequest('GetAccountsList', [
+        $response = $this->sendSoapRequest('GetAccountRest', [
             'request' => [
-                'request_ref' => '',
-                'principal' => $principal,
-                'client_id' => $clientId,
+                'principal' => $apiKey,
+                'account_id' => $firstAccountId,
             ],
         ]);
+        $preResponse = $response->children('http://tempuri.org/')->GetAccountRestResponse;
+        $preResult = $preResponse->GetAccountRestResult;
 
-        $accountId = $accounts['GetAccountsListResponse']['GetAccountsListResult']['accounts']['Account']['id'] ?? null;
-
-        if (!$accountId) {
-            return 0;
-        }
-
-        $from = Carbon::yesterday()->format('d.m.Y');
-        $to = Carbon::yesterday()->format('d.m.Y');
-
-        $turns = $this->sendSoapRequest('GetAccountTurns', [
-            'request' => [
-                'request_ref' => '',
-                'principal' => $principal,
-                'account_id' => $accountId,
-                'date_from' => $from,
-                'date_to' => $to,
-            ],
-        ]);
-
-        $total = 0;
-        $items = $turns['GetAccountTurnsResponse']['GetAccountTurnsResult']['turns']['Turns'] ?? [];
-
-        if (isset($items['CrncyCredit'])) {
-            $total += (float)$items['CrncyCredit'];
-        } else {
-            foreach ($items as $turn) {
-                $total += (float)$turn['CrncyCredit'];
-            }
-        }
-
-        return (int)round($total);
+        return (int) $preResult->confirmed_balance;
     }
 
-    private function sendSoapRequest(string $action, array $params): array
+    private function sendSoapRequest(string $action, array $params): SimpleXMLElement
     {
         $xmlBody = $this->buildSoapEnvelope($action, $params);
-
-        $headers = [
-            'Content-Type: text/xml; charset=utf-8',
-            'SOAPAction: "' . self::NAMESPACE . 'IClientAPIService/' . $action . '"',
-            'Content-Length: ' . strlen($xmlBody),
-        ];
 
         $ch = curl_init(self::ENDPOINT);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $xmlBody);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: text/xml; charset=utf-8',
+            'SOAPAction: "' . self::NAMESPACE . 'IClientAPIService/' . $action . '"',
+            'Content-Length: ' . strlen($xmlBody),
+        ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
         $response = curl_exec($ch);
@@ -127,9 +91,9 @@ dd($preAuth);
         curl_close($ch);
 
         $xml = simplexml_load_string($response);
-        $json = json_decode(json_encode($xml), true);
 
-        return $json['s:Body'] ?? [];
+        $namespaces = $xml->getNamespaces(true);
+        return $xml->children($namespaces['s'])->Body;
     }
 
     private function buildSoapEnvelope(string $action, array $params): string

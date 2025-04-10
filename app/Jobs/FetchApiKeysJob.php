@@ -17,18 +17,18 @@ class FetchApiKeysJob extends Job
     {
         $data = $googleSheetService->getSpreadsheetValues(
             env('BASE_SPREADSHEET_ID'),
-            self::API_KEYS_RANGE
+            self::API_KEYS_RANGE,
         );
 
         foreach ($data->getValues() as $index => $row) {
             $apiKey = $row[0] ?? null;
-            $type = $row[2] ?? 'checkbox';
+            $type = ($row[2] ?? 'checkbox');
 
             if ($apiKey) {
                 dispatch(new ProcessApiKeyJob(
                     $apiKey,
                     $index + 1,
-                    $type
+                    $type,
                 ));
             }
         }

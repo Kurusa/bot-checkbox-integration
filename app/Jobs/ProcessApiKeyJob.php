@@ -24,6 +24,6 @@ class ProcessApiKeyJob extends Job
         $service = $factory->make($this->type);
         $totalTurnover = $service->getTotalTurnover($this->apiKey);
 
-        dispatch(new UpdateGoogleSheetJob($totalTurnover, $this->apiKeyIndex));
+        dispatch(new UpdateGoogleSheetJob($totalTurnover, $this->apiKeyIndex, $this->type));
     }
 }

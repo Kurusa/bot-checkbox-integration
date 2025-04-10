@@ -2,45 +2,36 @@
 
 namespace App\Services\Balance;
 
-use Carbon\Carbon;
 use GuzzleHttp\Client;
 
 class PrivatBalanceService implements BalancerServiceInterface
 {
-    private const STATEMENT_URL = 'https://acp.privatbank.ua/api/statements/transactions';
+    private const BALANCE_URL = 'https://acp.privatbank.ua/api/statements/balance/final';
 
     public function getTotalTurnover(string $apiKey): int
     {
         $client = new Client();
 
-        $fromDate = Carbon::yesterday()->format('d-m-Y');
-        $toDate = Carbon::yesterday()->format('d-m-Y');
-
-        $response = $client->get(self::STATEMENT_URL, [
+        $response = $client->get(self::BALANCE_URL, [
             'headers' => [
                 'Accept' => 'application/json',
                 'token' => $apiKey,
                 'Content-Type' => 'application/json;charset=cp1251',
             ],
-            'query' => [
-                'startDate' => $fromDate,
-                'endDate' => $toDate,
-                'limit' => 400,
-            ],
         ]);
 
-        $data = json_decode($response->getBody()->getContents(), true, 512, JSON_INVALID_UTF8_IGNORE);
+        $rawResponse = $response->getBody()->getContents();
+        $utf8Response = mb_convert_encoding($rawResponse, 'UTF-8', 'CP1251');
+        $data = json_decode($utf8Response, true);
 
-        $transactions = $data['transactions'] ?? [];
+        $balances = $data['balances'] ?? [];
 
-        $totalIncome = 0;
+        $totalBalance = 0;
 
-        foreach ($transactions as $transaction) {
-            if (($transaction['TRANTYPE'] ?? null) === 'C') {
-                $totalIncome += (int)round(floatval($transaction['SUM_E']));
-            }
+        foreach ($balances as $balance) {
+            $totalBalance += floatval($balance['balanceOutEq'] ?? 0);
         }
 
-        return $totalIncome;
+        return (int)round($totalBalance);
     }
 }
