@@ -37,13 +37,13 @@ class UpdateGoogleSheetJob extends Job
                 ]]
             ]);
 
-            $googleSheetService->writeSpreadsheetValue(
+            $googleSheetService->appendSpreadsheetValue(
                 $spreadsheetId,
                 $body,
                 "$this->apiKeyIndex!A{$rowIndex}:B{$rowIndex}"
             );
         } else {
-            $googleSheetService->writeSpreadsheetValue(
+            $googleSheetService->updateSpreadsheetValue(
                 $spreadsheetId,
                 new ValueRange([
                     'values' => [[
