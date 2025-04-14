@@ -9,10 +9,10 @@ class NovaPayBalanceService implements BalancerServiceInterface
     private const ENDPOINT = 'https://business.novapay.ua/Services/ClientAPIService.svc';
     private const NAMESPACE = 'http://tempuri.org/';
 
-    public function getTotalTurnover(string $apiKey): int
+    public function refreshPrincipal(string $apiKey): void
     {
-//        [$login, $password] = explode(':', $apiKey);
-
+//        [$login, $password] = explode(':', '');
+//
 //        $preAuth = $this->sendSoapRequest('PreUserAuthentication', [
 //            'request' => [
 //                'login' => $login,
@@ -24,17 +24,35 @@ class NovaPayBalanceService implements BalancerServiceInterface
 //
 //        $tempPrincipal = (string)$preResult->temp_principal;
 //        $codeOperationOtp = (string)$preResult->code_operation_otp;
-//
 //        dd([
 //            $tempPrincipal,
 //            $codeOperationOtp,
 //        ]);
+//        $auth = $this->sendSoapRequest('UserAuthentication', [
+//            'request' => [
+//                'temp_principal' => '',
+//                'code_operation_otp' => ,
+//                'otp_password' => '',
+//            ],
+//        ]);
+//
+//        $authResponse = $auth->children('http://tempuri.org/')->UserAuthenticationResponse;
+//        $authResult = $authResponse->UserAuthenticationResult;
+//
+//        dd($authResult);
+//
+//        $principal = $authResult['principal'] ?? null;
 
         $this->sendSoapRequest('RefreshUserAuthentication', [
             'request' => [
                 'principal' => $apiKey,
             ],
         ]);
+    }
+
+    public function getTotalTurnover(string $apiKey): int
+    {
+        $this->refreshPrincipal($apiKey);
 
         $response = $this->sendSoapRequest('GetClientsList', [
             'request' => [
