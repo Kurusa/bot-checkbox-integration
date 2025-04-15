@@ -3,6 +3,7 @@
 namespace App\Services\Balance;
 
 use SimpleXMLElement;
+use Throwable;
 
 class NovaPayBalanceService implements BalancerServiceInterface
 {
@@ -52,37 +53,40 @@ class NovaPayBalanceService implements BalancerServiceInterface
 
     public function getTotalTurnover(string $apiKey): int
     {
-        $this->refreshPrincipal($apiKey);
+        try {
+            $this->refreshPrincipal($apiKey);
 
-        $response = $this->sendSoapRequest('GetClientsList', [
-            'request' => [
-                'principal' => $apiKey,
-            ],
-        ]);
-        $preResponse = $response->children('http://tempuri.org/')->GetClientsListResponse;
-        $preResult = $preResponse->GetClientsListResult;
-        $firstClientId = (string)$preResult->clients->Clients->id;
+            $response = $this->sendSoapRequest('GetClientsList', [
+                'request' => [
+                    'principal' => $apiKey,
+                ],
+            ]);
+            $preResponse = $response->children('http://tempuri.org/')->GetClientsListResponse;
+            $preResult = $preResponse->GetClientsListResult;
+            $firstClientId = (string)$preResult->clients->Clients->id;
 
-        $response = $this->sendSoapRequest('GetAccountsList', [
-            'request' => [
-                'principal' => $apiKey,
-                'client_id' => $firstClientId,
-            ],
-        ]);
-        $preResponse = $response->children('http://tempuri.org/')->GetAccountsListResponse;
-        $preResult = $preResponse->GetAccountsListResult;
-        $firstAccountId = (string)$preResult->accounts->Accounts->id;
+            $response = $this->sendSoapRequest('GetAccountsList', [
+                'request' => [
+                    'principal' => $apiKey,
+                    'client_id' => $firstClientId,
+                ],
+            ]);
+            $preResponse = $response->children('http://tempuri.org/')->GetAccountsListResponse;
+            $preResult = $preResponse->GetAccountsListResult;
+            $firstAccountId = (string)$preResult->accounts->Accounts->id;
 
-        $response = $this->sendSoapRequest('GetAccountRest', [
-            'request' => [
-                'principal' => $apiKey,
-                'account_id' => $firstAccountId,
-            ],
-        ]);
-        $preResponse = $response->children('http://tempuri.org/')->GetAccountRestResponse;
-        $preResult = $preResponse->GetAccountRestResult;
-
-        return (int) $preResult->confirmed_balance;
+            $response = $this->sendSoapRequest('GetAccountRest', [
+                'request' => [
+                    'principal' => $apiKey,
+                    'account_id' => $firstAccountId,
+                ],
+            ]);
+            $preResponse = $response->children('http://tempuri.org/')->GetAccountRestResponse;
+            $preResult = $preResponse->GetAccountRestResult;
+            return (int)$preResult->confirmed_balance;
+        } catch (Throwable $th) {
+            return 0;
+        }
     }
 
     private function sendSoapRequest(string $action, array $params): SimpleXMLElement

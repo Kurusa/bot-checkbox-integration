@@ -13,6 +13,10 @@ class FetchApiKeysJob extends Job
 
     private const API_KEYS_RANGE = 'API_checkbox!C2:E30';
 
+    public function __construct(private readonly string $filterType)
+    {
+    }
+
     public function handle(GoogleSheetService $googleSheetService): void
     {
         $data = $googleSheetService->getSpreadsheetValues(
@@ -24,12 +28,8 @@ class FetchApiKeysJob extends Job
             $apiKey = $row[0] ?? null;
             $type = ($row[2] ?? 'checkbox');
 
-            if ($apiKey) {
-                dispatch(new ProcessApiKeyJob(
-                    $apiKey,
-                    $index + 1,
-                    $type,
-                ));
+            if ($apiKey && (strtolower($type) === strtolower($this->filterType))) {
+                dispatch(new ProcessApiKeyJob($apiKey, $index + 1, $type));
             }
         }
     }
