@@ -64,8 +64,6 @@ class NovaPayBalanceService
 
     public function getAvailableBalance(string $apiKey): int
     {
-        $this->refreshPrincipal($apiKey);
-
         $response = $this->sendSoapRequest('GetClientsList', [
             'request' => [
                 'principal' => $apiKey,
