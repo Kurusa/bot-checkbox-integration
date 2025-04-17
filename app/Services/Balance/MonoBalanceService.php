@@ -25,7 +25,7 @@ class MonoBalanceService implements BalancerServiceInterface
 
         $totalBalance = $fopAccounts->sum('balance');
 
-        return (int) ($totalBalance / 100);
+        return (int)($totalBalance / 100);
     }
 
     private function getFopAccounts(array $accounts): Collection

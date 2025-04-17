@@ -12,7 +12,6 @@ class BalanceServiceFactory
             'checkbox' => app(CheckboxBalanceService::class),
             'mono' => app(MonoBalanceService::class),
             'privat' => app(PrivatBalanceService::class),
-            'novapay' => app(NovaPayBalanceService::class),
             default => throw new InvalidArgumentException("Unsupported service type: {$type}"),
         };
     }

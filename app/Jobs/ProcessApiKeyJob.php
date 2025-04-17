@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Services\Balance\BalanceRequest;
 use App\Services\Balance\BalanceServiceFactory;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -11,19 +12,24 @@ class ProcessApiKeyJob extends Job
 {
     use InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(
-        private readonly string $apiKey,
-        private readonly int    $apiKeyIndex,
-        private readonly string $type,
-    )
+    public function __construct(private readonly BalanceRequest $request)
     {
     }
 
     public function handle(BalanceServiceFactory $factory): void
     {
-        $service = $factory->make($this->type);
-        $totalTurnover = $service->getTotalTurnover($this->apiKey);
+        $service = $factory->make($this->request->type);
 
-        dispatch(new UpdateGoogleSheetJob($totalTurnover, $this->apiKeyIndex, $this->type));
+        if (!empty($this->request->accountNumber)) {
+            $service->setAccountNumber($this->request->accountNumber);
+        }
+
+        $totalTurnover = $service->getTotalTurnover($this->request->apiKey);
+
+        dispatch(new UpdateGoogleSheetJob(
+            $totalTurnover,
+            $this->request->apiKeyIndex,
+            $this->request->type
+        ));
     }
 }

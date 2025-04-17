@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\LoadTelegramUser;
+
 require_once __DIR__.'/../vendor/autoload.php';
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
@@ -61,6 +63,10 @@ $app->singleton(
 
 $app->configure('app');
 
+collect(scandir(__DIR__ . '/../config'))->each(function ($item) use ($app) {
+    $app->configure(basename($item, '.php'));
+});
+
 /*
 |--------------------------------------------------------------------------
 | Register Middleware
@@ -71,14 +77,9 @@ $app->configure('app');
 | route or middleware that'll be assigned to some specific routes.
 |
 */
-
-// $app->middleware([
-//     App\Http\Middleware\ExampleMiddleware::class
-// ]);
-
-// $app->routeMiddleware([
-//     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
+$app->routeMiddleware(middleware: [
+    'load_telegram_user' => LoadTelegramUser::class,
+]);
 
 /*
 |--------------------------------------------------------------------------
@@ -92,8 +93,6 @@ $app->configure('app');
 */
 
 $app->register(App\Providers\AppServiceProvider::class);
-// $app->register(App\Providers\AuthServiceProvider::class);
-// $app->register(App\Providers\EventServiceProvider::class);
 
 /*
 |--------------------------------------------------------------------------

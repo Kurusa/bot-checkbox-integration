@@ -8,6 +8,8 @@ class PrivatBalanceService implements BalancerServiceInterface
 {
     private const BALANCE_URL = 'https://acp.privatbank.ua/api/statements/balance/final';
 
+    private string $accountNumber = '';
+
     public function getTotalTurnover(string $apiKey): int
     {
         $client = new Client();
@@ -26,12 +28,17 @@ class PrivatBalanceService implements BalancerServiceInterface
 
         $balances = $data['balances'] ?? [];
 
-        $totalBalance = 0;
-
         foreach ($balances as $balance) {
-            $totalBalance += floatval($balance['balanceOutEq'] ?? 0);
+            if ($balance['acc'] === $this->accountNumber) {
+                return (int)round(floatval($balance['balanceOutEq'] ?? 0));
+            }
         }
 
-        return (int)round($totalBalance);
+        return 0;
+    }
+
+    public function setAccountNumber(string $accountNumber): void
+    {
+        $this->accountNumber = $accountNumber;
     }
 }
