@@ -43,6 +43,8 @@ class HandleAccountSelect extends BaseCommand
         $preAuthData = $balanceService->preAuthenticate("{$account->login}:{$account->password}");
 
         $account->update([
+            'principal' => null,
+            'principal_valid_until' => null,
             'temp_principal' => $preAuthData['temp_principal'],
             'code_operation_otp' => $preAuthData['code_operation_otp'],
         ]);

@@ -3,8 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Jobs\FetchApiKeysJob;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Log;
 
 class UpdateFinancialDataCommand extends Command
 {
@@ -20,6 +22,8 @@ class UpdateFinancialDataCommand extends Command
             $this->error('Invalid source type. Use: mono, privat, checkbox, novapay.');
             return Command::INVALID;
         }
+
+        Log::info('Fetching data for ' . $source. '. Time: ' . Carbon::now()->format('Y-m-d H:i:s'));
 
         Bus::dispatchNow(new FetchApiKeysJob($source));
 

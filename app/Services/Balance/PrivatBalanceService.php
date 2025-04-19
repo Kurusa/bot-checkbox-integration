@@ -3,10 +3,11 @@
 namespace App\Services\Balance;
 
 use GuzzleHttp\Client;
+use Illuminate\Support\Carbon;
 
 class PrivatBalanceService implements BalancerServiceInterface
 {
-    private const BALANCE_URL = 'https://acp.privatbank.ua/api/statements/balance/final';
+    private const BALANCE_URL = 'https://acp.privatbank.ua/api/statements/balance';
 
     private string $accountNumber = '';
 
@@ -14,7 +15,7 @@ class PrivatBalanceService implements BalancerServiceInterface
     {
         $client = new Client();
 
-        $response = $client->get(self::BALANCE_URL, [
+        $response = $client->get(self::BALANCE_URL. '?startDate=' . Carbon::now()->format('d-m-Y'), [
             'headers' => [
                 'Accept' => 'application/json',
                 'token' => $apiKey,
