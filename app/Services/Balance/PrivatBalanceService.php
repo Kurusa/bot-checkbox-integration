@@ -15,7 +15,7 @@ class PrivatBalanceService implements BalancerServiceInterface
     {
         $client = new Client();
 
-        $response = $client->get(self::BALANCE_URL. '?startDate=' . Carbon::now()->format('d-m-Y'), [
+        $response = $client->get(self::BALANCE_URL . '?startDate=' . Carbon::now()->format('d-m-Y'), [
             'headers' => [
                 'Accept' => 'application/json',
                 'token' => $apiKey,

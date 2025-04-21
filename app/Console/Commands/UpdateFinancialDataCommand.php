@@ -23,7 +23,7 @@ class UpdateFinancialDataCommand extends Command
             return Command::INVALID;
         }
 
-        Log::info('Fetching data for ' . $source. '. Time: ' . Carbon::now()->format('Y-m-d H:i:s'));
+        Log::info('Fetching data for ' . $source . '. Time: ' . Carbon::now()->format('Y-m-d H:i:s'));
 
         Bus::dispatchNow(new FetchApiKeysJob($source));
 

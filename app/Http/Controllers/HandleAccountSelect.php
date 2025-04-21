@@ -49,6 +49,11 @@ class HandleAccountSelect extends BaseCommand
             'code_operation_otp' => $preAuthData['code_operation_otp'],
         ]);
 
+        if (empty($preAuthData['temp_principal']) || empty($preAuthData['code_operation_otp'])) {
+            $this->getBot()->sendText('Авторизацію пройти неможливо, оновіть логін і пароль.');
+            return;
+        }
+
         $this->user->update([
             'status' => UserStatus::WAITING_FOR_OTP_PASSWORD,
         ]);
