@@ -2,6 +2,7 @@
 
 namespace App\Services\Balance;
 
+use Illuminate\Support\Facades\Log;
 use SimpleXMLElement;
 
 class NovaPayBalanceService
@@ -71,7 +72,11 @@ class NovaPayBalanceService
         ]);
         $preResponse = $response->children('http://tempuri.org/')->GetClientsListResponse;
         $preResult = $preResponse->GetClientsListResult;
-        $firstClientId = (string)$preResult->clients->Clients->id;
+        $firstClientId = (string)$preResult->clients?->Clients->id;
+
+        if (empty($firstClientId)) {
+            return 0;
+        }
 
         $response = $this->sendSoapRequest('GetAccountsList', [
             'request' => [
@@ -81,7 +86,7 @@ class NovaPayBalanceService
         ]);
         $preResponse = $response->children('http://tempuri.org/')->GetAccountsListResponse;
         $preResult = $preResponse->GetAccountsListResult;
-        $firstAccountId = (string)$preResult->accounts->Accounts->id;
+        $firstAccountId = (string)$preResult->accounts?->Accounts->id;
 
         $response = $this->sendSoapRequest('GetAccountRest', [
             'request' => [
